@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+from sklearn.metrics import r2_score
 from keras.models import Sequential
 from keras.layers import *
 from keras.metrics import RootMeanSquaredError
@@ -23,18 +24,43 @@ def get_X_y(data, window=10):
     return np.array(X), np.array(norm_data['Close'][window:]), np.array(data['Close'][window:]).mean(), np.array(data['Close'][window:]).std()
 
 
+# truncates to n-th decimal place
+def truncate(f: float, n: int):
+    s = '{}'.format(f)
+    if 'e' in s or 'E' in s:
+        return '{0:.{1}f}'.format(f, n)
+    i, p, d = s.partition('.')
+    return '.'.join([i, (d+'0'*n)[:n]])
+
+
 # display predicted vs true line graph
 def plot_predicted_vs_true(y_pred, y_true):
     plt.clf()
     plt.plot(y_pred, label='predicted')
     plt.plot(y_true, label='true')
     plt.legend()
-    plt.show()
+    plt.xlabel('Time step (days)')
+    plt.ylabel('Stock value (USD)')
+    plt.title('Predicted vs. True Stock Value')
+    plt.annotate(
+        f'R^2 score = {truncate(r2_score(y_true, y_pred), 4)}',
+        (500, 220))
+    plt.savefig('predicted_vs_true.png')
+    plt.close()
 
 
 # display parity plot
 def plot_parity(y_pred, y_true):
-    pass
+    plt.clf()
+    plt.scatter(y_true, y_pred)
+    plt.xlabel('True price')
+    plt.ylabel('Predicted price')
+    plt.title('Predicted vs. True Stock Value')
+    plt.annotate(
+        f'R^2 score = {truncate(r2_score(y_true, y_pred), 4)}',
+        (400, 240))
+    plt.savefig('parity.png')
+    plt.close()
 
 
 # column-wise normalization of df
@@ -108,6 +134,7 @@ def main():
     y_pred = denormalize(pd.DataFrame(model.predict(X_test).flatten()), test_mean, test_std).to_numpy()
     y_test = denormalize(pd.DataFrame(y_test), test_mean, test_std).to_numpy()
     plot_predicted_vs_true(y_pred, y_test)
+    plot_parity(y_pred, y_test)
 
 
 if __name__ == '__main__':
