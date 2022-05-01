@@ -10,8 +10,6 @@ from sklearn.metrics import r2_score
 from keras.models import Sequential
 from keras.layers import *
 from keras.metrics import RootMeanSquaredError
-from keras.models import load_model
-from sklearn.model_selection import train_test_split
 
 
 # returns: X (norm), y (norm), y_mean (orig), y_std (orig)
@@ -94,7 +92,6 @@ def main():
     percent_change = [(data['Close'][i] - data['Close'][i-1]) / data['Close'][i-1] for i in range(1, data.shape[0])]
     data = data[1:]
     data['Change'] = percent_change
-    print(data.head(10))
 
     # split into train/val/test sets
     num_samples = data.shape[0]
@@ -114,8 +111,8 @@ def main():
     model.add(Conv1D(128, 3, activation='relu', input_shape=(timesteps, num_features)))
     model.add(MaxPooling1D(pool_size=2))
     model.add(Flatten())
-    model.add(RepeatVector(1))
-    model.add(LSTM(64, activation='softsign'))
+    model.add(RepeatVector(10))
+    model.add(LSTM(64, activation='softsign', return_sequences=True))
     model.add(Flatten())
     model.add(Dense(1, 'linear'))
     model.build(input_shape=input_shape)
